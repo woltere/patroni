@@ -125,13 +125,28 @@ class Postgresql:
     def delete_trigger_file(self):
         os.path.exists(self.trigger_file) and os.unlink(self.trigger_file)
 
-    def sync_from_leader(self, leader):
+    def sync_from_leader(self, leader, create_slot=False):
         r = parseurl(leader.conn_url)
 
         pgpass = 'pgpass'
         with open(pgpass, 'w') as f:
             os.fchmod(f.fileno(), 0o600)
             f.write('{host}:{port}:*:{user}:{password}\n'.format(**r))
+
+        # create slot when asked to do so. Normally, the leader does it on its own,
+        # but in case it's not managed by Patroni, we have to do it here.
+        if create_slot:
+            # establish new replication slot
+            conn = None
+            try:
+                conn = psycopg2.connect(leader.conn_url + "?replication=database")
+                conn.autocommit = True
+                cur = conn.cursor()
+                cur.execute("CREATE_REPLICATION_SLOT {0} PHYSICAL".format(self.name))
+            except psycopg2.Error:
+                logger.exception("Could not create a physical replication slot {0} on the master".format(self.name))
+            finally:
+                conn and conn.close()
 
         env = os.environ.copy()
         env['PGPASSFILE'] = pgpass
