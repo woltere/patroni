@@ -56,15 +56,15 @@ class Leader(namedtuple('Leader', 'index,expiration,ttl,member')):
         return self.member.conn_url
 
 
-class Cluster(namedtuple('Cluster', 'initialize,leader,last_leader_operation,members')):
-
+class Cluster(namedtuple('Cluster', 'initialize,leader,last_leader_operation,members,standby')):
     """Immutable object (namedtuple) which represents PostgreSQL cluster.
     Consists of the following fields:
     :param initialize: boolean, shows whether this cluster has initialization key stored in DC or not.
     :param leader: `Leader` object which represents current leader of the cluster
     :param last_leader_operation: int or long object containing position of last known leader operation.
         This value is stored in `/optime/leader` key
-    :param members: list of Member object, all PostgreSQL cluster members including leader"""
+    :param members: list of Member object, all PostgreSQL cluster members including leader
+    :param standby: indicates whether this cluster runs a replica of an external PostgreSQL cluster"""
 
     def is_unlocked(self):
         return not (self.leader and self.leader.name)
@@ -78,6 +78,7 @@ class AbstractDCS:
     _LEADER = 'leader'
     _MEMBERS = 'members/'
     _OPTIME = 'optime'
+    _STANDBY = 'standby'
     _LEADER_OPTIME = _OPTIME + '/' + _LEADER
 
     def __init__(self, name, config):
@@ -112,6 +113,10 @@ class AbstractDCS:
     @property
     def leader_optime_path(self):
         return self.client_path(self._LEADER_OPTIME)
+
+    @property
+    def standby_path(self):
+        return self.client_path(self._STANDBY)
 
     @abc.abstractmethod
     def get_cluster(self):
@@ -181,6 +186,18 @@ class AbstractDCS:
     @abc.abstractmethod
     def cancel_initialization(self):
         """ Removes the initialize key for a cluster """
+
+    @abc.abstractmethod
+    def set_standby(self):
+        """ Sets the standby mode flag for a cluster """
+
+    @abc.abstractmethod
+    def clear_standby(self):
+        """ Clears the standby mode for a cluster """
+
+    @abc.abstractproperty
+    def standby(self):
+        """ Returns whether the standby mode is turned on """
 
     def watch(self, timeout):
         sleep(timeout)

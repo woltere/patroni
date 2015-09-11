@@ -166,7 +166,7 @@ class TestPostgresql(unittest.TestCase):
 
     def test_create_replication_slots(self):
         self.p.start()
-        cluster = Cluster(True, self.leader, 0, [self.me, self.other, self.leadermem])
+        cluster = Cluster(True, self.leader, 0, [self.me, self.other, self.leadermem], False)
         self.p.create_replication_slots(cluster)
 
     def test_query(self):
@@ -180,7 +180,7 @@ class TestPostgresql(unittest.TestCase):
         self.assertRaises(psycopg2.OperationalError, self.p.query, 'blabla')
 
     def test_is_healthiest_node(self):
-        cluster = Cluster(True, self.leader, 0, [self.me, self.other, self.leadermem])
+        cluster = Cluster(True, self.leader, 0, [self.me, self.other, self.leadermem], False)
         self.assertTrue(self.p.is_healthiest_node(cluster))
         self.p.is_leader = false
         self.assertFalse(self.p.is_healthiest_node(cluster))

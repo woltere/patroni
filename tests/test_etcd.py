@@ -85,6 +85,9 @@ def etcd_write(key, value, **kwargs):
     if key == '/service/test/leader':
         if kwargs.get('prevValue', None) == 'foo' or not kwargs.get('prevExist', True):
             return True
+    if key == '/service/test/standby':
+        if value == 'test' and not kwargs.get('prevExist', True):
+            return True
     raise etcd.EtcdException
 
 
@@ -285,3 +288,8 @@ class TestEtcd(unittest.TestCase):
         self.etcd.watch(5)
         self.etcd.watch(10)
         self.etcd.watch(100)
+
+    def standby(self):
+        self.etcd.set_standby()
+        self.assertRaises(etcd.EtcdException, self.etcd.clear_stadby)
+        self.assertRaises(etcd.EtcdException, self.standby)

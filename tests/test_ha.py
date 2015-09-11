@@ -61,7 +61,7 @@ def dead_etcd():
 
 
 def get_unlocked_cluster():
-    return Cluster(False, None, None, [])
+    return Cluster(False, None, None, [], False)
 
 
 class TestHa(unittest.TestCase):

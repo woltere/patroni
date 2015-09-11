@@ -123,7 +123,7 @@ class TestPatroni(unittest.TestCase):
         now = datetime.datetime.utcnow()
         member = Member(0, self.p.postgresql.name, 'b', 'c', (now + datetime.timedelta(
             seconds=self.p.shutdown_member_ttl + 10)).strftime('%Y-%m-%dT%H:%M:%S.%fZ'), None)
-        self.p.ha.cluster = Cluster(True, member, 0, [member])
+        self.p.ha.cluster = Cluster(True, member, 0, [member], False)
         self.p.touch_member()
 
     def test_patroni_initialize(self):

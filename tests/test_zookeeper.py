@@ -73,6 +73,8 @@ class MockKazooClient:
             return ('foo', ZnodeStat(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
         elif path.endswith('/initialize'):
             return ('foo', ZnodeStat(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+        elif path.endswith(ZooKeeper._STANDBY):
+            return ('foo', ZnodeStat(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
 
     def get_children(self, path, watch=None, include_data=False):
         return ['foo', 'bar', 'buzz']
@@ -97,6 +99,8 @@ class MockKazooClient:
             raise Exception
         elif path.endswith('/initialize'):
             raise NoNodeError
+        elif path.endswith(ZooKeeper._STANDBY):
+            return True
 
     def set_hosts(self, hosts, randomize_hosts=None):
         pass
@@ -173,3 +177,8 @@ class TestZooKeeper(unittest.TestCase):
 
     def test_watch(self):
         self.zk.watch(0)
+
+    def test_standby(self):
+        self.zk.set_standby()
+        self.assertTrue(self.zk.standby)
+        self.zk.clear_standby()

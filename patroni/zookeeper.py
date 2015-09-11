@@ -96,6 +96,7 @@ class ZooKeeper(AbstractDCS):
         self.members = []
         self.leader = None
         self.last_leader_operation = 0
+        self._standby = False
 
         self.client.start(None)
 
@@ -152,6 +153,8 @@ class ZooKeeper(AbstractDCS):
             if last_leader_operation:
                 self.last_leader_operation = int(last_leader_operation[0])
 
+        self._standby = self.standby
+
     def get_cluster(self):
         if self.exhibitor and self.exhibitor.poll():
             self.client.set_hosts(self.exhibitor.zookeeper_hosts)
@@ -163,7 +166,7 @@ class ZooKeeper(AbstractDCS):
                 logger.exception('get_cluster')
                 self.session_listener(KazooState.LOST)
                 raise ZooKeeperError('ZooKeeper in not responding properly')
-        return Cluster(True, self.leader, self.last_leader_operation, self.members)
+        return Cluster(True, self.leader, self.last_leader_operation, self.members, self._standby)
 
     def _create(self, path, value, **kwargs):
         try:
@@ -232,3 +235,18 @@ class ZooKeeper(AbstractDCS):
         self.cluster_event.wait(timeout)
         if self.cluster_event.isSet():
             self.fetch_cluster = True
+
+    def set_standby(self):
+        return self._create(self.standby_path, self._name, makepath=True, ephemeral=True)
+
+    def clear_standby(self):
+        node = self.get_node(self.standby_path)
+        if node and node[0] == self._name:
+            try:
+                self.client.retry(self.client.delete, self.standby_path, version=node[1].mzxid)
+            except KazooException:
+                logger.exception("Unable to delete standby key")
+
+    @property
+    def standby(self):
+        return self.get_node(self.standby_path) is not None

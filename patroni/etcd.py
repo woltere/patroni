@@ -195,9 +195,11 @@ class Etcd(AbstractDCS):
                 member = ([m for m in members if m.name == leader.value] or [member])[0]
                 leader = Leader(leader.modifiedIndex, leader.expiration, leader.ttl, member)
 
-            self.cluster = Cluster(initialize, leader, last_leader_operation, members)
+            standby = nodes.get(self._STANDBY, False)
+
+            self.cluster = Cluster(initialize, leader, last_leader_operation, members, standby)
         except etcd.EtcdKeyNotFound:
-            self.cluster = Cluster(False, None, None, [])
+            self.cluster = Cluster(False, None, None, [], False)
         except:
             self.cluster = None
             logger.exception('get_cluster')
@@ -263,3 +265,16 @@ class Etcd(AbstractDCS):
                 timeout = end_time - time.time()
 
         timeout > 0 and super(Etcd, self).watch(timeout)
+
+    @catch_etcd_errors
+    def set_standby(self):
+        return self.client.write(self.standby_path, self._name, prevExist=False)
+
+    @catch_etcd_errors
+    def clear_standby(self):
+        return self.client.delete(self.standby_path, prevValue=self._name)
+
+    @property
+    @catch_etcd_errors
+    def standby(self):
+        return self.client.read(self.standby_path) is not None
