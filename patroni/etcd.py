@@ -207,12 +207,16 @@ class Etcd(AbstractDCS):
         return self.cluster
 
     @catch_etcd_errors
-    def touch_member(self, connection_string, ttl=None):
-        return self.retry(self.client.set, self.member_path, connection_string, ttl or self.member_ttl)
+    def touch_member(self, connection_string, ttl=None, permanent=False, name=None):
+        member_path = self.client_path(self._MEMBERS + name) if name else self.member_path
+        # if permanent is set, then assign no TTL, otherwise use the member_ttl if no explicit TTL is specifed
+        return self.retry(self.client.set, member_path, connection_string,
+                          None if permanent else (ttl or self.member_ttl))
 
     @catch_etcd_errors
-    def take_leader(self):
-        return self.retry(self.client.set, self.leader_path, self._name, self.ttl)
+    def take_leader(self, permanent=False, name=None):
+        name = name or self._name
+        return self.retry(self.client.set, self.leader_path, name, None if permanent else self.ttl)
 
     def attempt_to_acquire_leader(self):
         try:

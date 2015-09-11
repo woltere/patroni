@@ -153,21 +153,32 @@ class AbstractDCS:
             return None
 
     @abc.abstractmethod
-    def touch_member(self, connection_string, ttl=None):
+    def touch_member(self, connection_string, ttl=None, permanent=False, name=None):
         """Update member key in DCS.
         This method should create or update key with the name = '/members/' + `~self._name`
-        and value = connection_string in a given DCS.
+        and value = connection_string in a given DCS. Both 'permanent' and 'name' parameters
+        are using in the cluster standby mode for creating a record corresponding to the
+        external master.
 
         :param connection_string: how this instance can be accessed by other instances
         :param ttl: ttl for member key, optional parameter. If it is None `~self.member_ttl will be used`
+        :param permanent: do not use TTL for a member key
+        :param name: supply a different name as contents of a member key
         :returns: `!True` on success otherwise `!False`
         """
 
     @abc.abstractmethod
-    def take_leader(self):
+    def take_leader(self, permanent=False, name=None):
         """This method should create leader key with value = `~self._name` and ttl=`~self.ttl`
         Since it could be called only on initial cluster bootstrap it could create this key regardless,
-        overwriting the key if necessary."""
+        overwriting the key if necessary. Both 'permanent' and 'name' parameters
+        are using in the cluster standby mode for creating a record corresponding to the
+        external master.
+
+        :param permanent: do not use TTL for a leader key.
+        :param name: supply a different node name as a contents of the leader key
+
+        """
 
     @abc.abstractmethod
     def initialize(self):

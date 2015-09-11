@@ -175,33 +175,36 @@ class ZooKeeper(AbstractDCS):
         except:
             return False
 
-    def attempt_to_acquire_leader(self):
-        ret = self._create(self.leader_path, self._name, makepath=True, ephemeral=True)
+    def attempt_to_acquire_leader(self, permanent=False, name=None):
+        name = name or self._name
+        ret = self._create(self.leader_path, name, makepath=True, ephemeral=(not permanent))
         ret or logger.info('Could not take out TTL lock')
         return ret
 
     def initialize(self):
         return self._create(self.initialize_path, self._name, makepath=True)
 
-    def touch_member(self, connection_string, ttl=None):
+    def touch_member(self, connection_string, ttl=None, permanent=False, name=None):
         for m in self.members:
-            if m.name == self._name:
+            if m.name == (self._name if not name else name):
                 return True
-        path = self.member_path
+        member_path = self.client_path(self._MEMBERS + name) if name else self.member_path
         try:
-            self.client.retry(self.client.create, path, connection_string, makepath=True, ephemeral=True)
+            self.client.retry(self.client.create, member_path, connection_string, makepath=True,
+                              ephemeral=(not permanent))
             return True
         except NodeExistsError:
             try:
-                self.client.retry(self.client.delete, path)
-                self.client.retry(self.client.create, path, connection_string, makepath=True, ephemeral=True)
+                self.client.retry(self.client.delete, member_path)
+                self.client.retry(self.client.create, member_path, connection_string, makepath=True,
+                                  ephemeral=(not permanent))
                 return True
             except:
                 logger.exception('touch_member')
         return False
 
-    def take_leader(self):
-        return self.attempt_to_acquire_leader()
+    def take_leader(self, permanent=False, name=None):
+        return self.attempt_to_acquire_leader(permanent, name)
 
     def update_leader(self, state_handler):
         last_operation = state_handler.last_operation()
