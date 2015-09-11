@@ -61,6 +61,8 @@ class Patroni:
                 # racing to initialize
                 if self.ha.dcs.initialize():
                     try:
+                        self.ha.dcs.set_standby()
+                        logger.info("set the standby mode")
                         self.postgresql.bootstrap()
                     except:
                         # bail out and clean the initialize flag.
@@ -70,8 +72,9 @@ class Patroni:
                     break
                 else:
                     leader = self.ha.dcs.current_leader()
-                    if leader and self.postgresql.bootstrap(leader):
+                    if leader and not self.ha.dcs.standby and self.postgresql.bootstrap(leader):
                         break
+                    self.ha.dcs.standby and logger.info("waiting while the cluster is in the standby mode")
                     sleep(5)
         elif self.postgresql.is_running():
             self.postgresql.load_replication_slots()

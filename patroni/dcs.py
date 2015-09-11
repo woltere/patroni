@@ -195,9 +195,13 @@ class AbstractDCS:
     def clear_standby(self):
         """ Clears the standby mode for a cluster """
 
-    @abc.abstractproperty
-    def standby(self):
+    @abc.abstractmethod
+    def get_standby(self):
         """ Returns whether the standby mode is turned on """
+
+    @property
+    def standby(self):
+        return self.get_standby()
 
     def watch(self, timeout):
         sleep(timeout)

@@ -247,6 +247,9 @@ class ZooKeeper(AbstractDCS):
             except KazooException:
                 logger.exception("Unable to delete standby key")
 
+    def get_standby(self):
+        return self.get_node(self.standby_path) is not None
+
     @property
     def standby(self):
-        return self.get_node(self.standby_path) is not None
+        return self.get_standby()

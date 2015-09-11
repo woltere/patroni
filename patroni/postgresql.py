@@ -261,6 +261,9 @@ class Postgresql:
                 member_conn.close()
                 logger.error([self.name, member.name, row])
                 if not row[0]:
+                    if cluster.standby:
+                        logger.info("Ignoring running master (%s) in a standby-mode cluster", member.name)
+                        continue
                     logger.warning('Master (%s) is still alive', member.name)
                     return False
                 if row[1] < 0:

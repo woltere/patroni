@@ -128,6 +128,8 @@ class TestPatroni(unittest.TestCase):
 
     def test_patroni_initialize(self):
         self.p.ha.dcs.client.write = etcd_write
+        self.p.ha.dcs.set_standby = true
+        self.p.ha.dcs.get_standby = false
         self.p.touch_member = self.touch_member
         self.p.postgresql.data_directory_empty = true
         self.p.ha.dcs.initialize = true

@@ -56,6 +56,9 @@ class Ha:
             if self.cluster.is_unlocked():
                 if self.state_handler.is_healthiest_node(self.old_cluster):
                     if self.acquire_lock():
+                        if self.dcs.standby:
+                            logger.info("cleared the standby mode")
+                            self.dcs.clear_standby()
                         if self.state_handler.is_leader() or self.state_handler.is_promoted:
                             return 'acquired session lock as a leader'
                         else:
@@ -79,6 +82,9 @@ class Ha:
                         return 'following a different leader because i am not the healthiest node'
             else:
                 if self.has_lock() and self.update_lock():
+                    if self.dcs.standby:
+                        logger.info("cleared the standby mode")
+                        self.dcs.clear_standby()
                     if self.state_handler.is_leader() or self.state_handler.is_promoted:
                         return 'no action.  i am the leader with the lock'
                     else:

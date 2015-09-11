@@ -274,7 +274,10 @@ class Etcd(AbstractDCS):
     def clear_standby(self):
         return self.client.delete(self.standby_path, prevValue=self._name)
 
-    @property
     @catch_etcd_errors
-    def standby(self):
+    def get_standby(self):
         return self.client.read(self.standby_path) is not None
+
+    @property
+    def standby(self):
+        return self.get_standby()
