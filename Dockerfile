@@ -15,8 +15,8 @@ RUN apt-get upgrade -y
 ENV PGVERSION 9.5
 RUN apt-get install postgresql-${PGVERSION} postgresql-server-dev-${PGVERSION} -y
 RUN apt-get install python python-dev python-pip -y
-ADD requirements-py2.txt /requirements-py2.txt
-RUN pip install -r /requirements-py2.txt
+ADD requirements.txt /requirements.txt
+RUN pip install -r /requirements.txt
 
 ENV PATH /usr/lib/postgresql/${PGVERSION}/bin:$PATH
 
@@ -33,9 +33,9 @@ RUN curl -L https://github.com/coreos/etcd/releases/download/v${ETCDVERSION}/etc
 ### Setting up a simple script that will serve as an entrypoint
 RUN mkdir /data/ && touch /var/log/etcd.log /var/log/etcd.err /pgpass /patroni/postgres.yml
 RUN chown postgres:postgres -R /patroni/ /data/ /pgpass /var/log/etcd.* /patroni/postgres.yml
-ADD docker/entrypoint.sh /entrypoint.sh
+ADD docker/entrypoint-consul.sh /entrypoint-consul.sh
 
 EXPOSE 4001 5432 2380
 
-ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
+ENTRYPOINT ["/bin/bash", "/entrypoint-consul.sh"]
 USER postgres
